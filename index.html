@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6-Month Study Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="light-mode">
+    <header>
+        <div class="container">
+            <h1 id="app-title">6-Month Study Planner</h1>
+            <div class="header-controls">
+                <button id="language-toggle" title="Toggle Language">
+                    <i class="fas fa-language"></i> <span id="current-lang">EN</span>
+                </button>
+                <button id="dark-mode-toggle" title="Toggle Dark Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="export-btn" title="Export Data">
+                    <i class="fas fa-file-export"></i>
+                </button>
+                <button id="notification-toggle" title="Toggle Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button id="settings-btn" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="dashboard">
+            <div class="card">
+                <h2 id="dashboard-title">Dashboard</h2>
+                <div class="progress-summary">
+                    <div class="overall-progress">
+                        <h3 id="overall-progress-title">Overall Progress</h3>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="overall-progress-bar" style="width: 0%;">0%</div>
+                        </div>
+                    </div>
+                    <div class="time-remaining">
+                        <h3 id="time-remaining-title">Time Remaining</h3>
+                        <p id="time-remaining-value">180 days</p>
+                    </div>
+                </div>
+                <div class="streak-container">
+                    <div class="streak-info">
+                        <h3 id="current-streak-title">Current Streak</h3>
+                        <p id="current-streak-value">0 days</p>
+                    </div>
+                    <button id="check-in-btn" class="check-in-button">
+                        <i class="fas fa-check"></i> <span id="check-in-text">Check-in Today</span>
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progress-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="month-selector">
+            <div class="card">
+                <h2 id="month-selector-title">Study Timeline</h2>
+                <div class="month-tabs">
+                    <button class="month-tab active" data-month="1">Month 1</button>
+                    <button class="month-tab" data-month="2">Month 2</button>
+                    <button class="month-tab" data-month="3">Month 3</button>
+                    <button class="month-tab" data-month="4">Month 4</button>
+                    <button class="month-tab" data-month="5">Month 5</button>
+                    <button class="month-tab" data-month="6">Month 6</button>
+                </div>
+                <div class="month-difficulty">
+                    <span id="current-month-difficulty" class="difficulty easy">🟢 Easy Start</span>
+                    <span id="current-month-focus">Focus on Basics + Light Topics</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="subject-progress">
+            <div class="card">
+                <h2 id="subject-progress-title">Subject Progress</h2>
+                <div class="subjects-grid" id="subjects-grid">
+                    <!-- Subjects will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <section id="weekly-rotation" class="hidden">
+            <div class="card">
+                <h2 id="weekly-rotation-title">Weekly Rotation Schedule</h2>
+                <table class="rotation-table">
+                    <thead>
+                        <tr>
+                            <th id="day-header">Day</th>
+                            <th id="subjects-header">Subjects</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Monday</td>
+                            <td>English, Chemistry</td>
+                        </tr>
+                        <tr>
+                            <td>Tuesday</td>
+                            <td>Mathematics, Biology</td>
+                        </tr>
+                        <tr>
+                            <td>Wednesday</td>
+                            <td>Physics, Urdu</td>
+                        </tr>
+                        <tr>
+                            <td>Thursday</td>
+                            <td>Computer, Tarjuma-tul-Quran</td>
+                        </tr>
+                        <tr>
+                            <td>Friday</td>
+                            <td>Pak Studies, English (extra)</td>
+                        </tr>
+                        <tr>
+                            <td>Saturday</td>
+                            <td>Math (extra), Science revision</td>
+                        </tr>
+                        <tr>
+                            <td>Sunday</td>
+                            <td>Rest or Full Revision</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="subject-detail" class="hidden">
+            <div class="card">
+                <div class="subject-header">
+                    <button id="back-to-subjects" class="back-button">
+                        <i class="fas fa-arrow-left"></i> <span id="back-text">Back</span>
+                    </button>
+                    <h2 id="subject-detail-title">Subject Details</h2>
+                </div>
+                <div class="subject-info">
+                    <h3 id="current-subject-name">Subject Name</h3>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="subject-progress-bar" style="width: 0%;">0%</div>
+                    </div>
+                </div>
+                <div class="tabs">
+                    <button class="tab active" data-tab="chapters">Chapters</button>
+                    <button class="tab" data-tab="notes">Notes</button>
+                    <button class="tab" data-tab="flashcards">Flashcards</button>
+                </div>
+                <div class="tab-content" id="chapters-content">
+                    <div class="chapter-list" id="chapter-list">
+                        <!-- Chapters will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="notes-content">
+                    <div class="notes-container">
+                        <textarea id="subject-notes" placeholder="Add your notes here..."></textarea>
+                        <button id="save-notes" class="save-button">Save Notes</button>
+                    </div>
+                </div>
+                <div class="tab-content hidden" id="flashcards-content">
+                    <div class="flashcards-container">
+                        <div id="flashcards-list">
+                            <!-- Flashcards will be populated by JavaScript -->
+                        </div>
+                        <div class="flashcard-controls">
+                            <button id="add-flashcard-btn" class="primary-button">
+                                <i class="fas fa-plus"></i> <span id="add-flashcard-text">Add Flashcard</span>
+                            </button>
+                            <button id="study-flashcards-btn" class="secondary-button">
+                                <i class="fas fa-play"></i> <span id="study-flashcards-text">Study Flashcards</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="analytics" class="hidden">
+            <div class="card">
+                <h2 id="analytics-title">Study Analytics</h2>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3 id="study-time-title">Total Study Time</h3>
+                        <p id="study-time-value">0 hours</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 id="completion-rate-title">Completion Rate</h3>
+                        <p id="completion-rate-value">0%</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 id="best-subject-title">Best Subject</h3>
+                        <p id="best-subject-value">-</p>
+                    </div>
+                    <div class="analytics-card">
+                        <h3 id="focus-subject-title">Focus Subject</h3>
+                        <p id="focus-subject-value">-</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="analytics-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="goals" class="hidden">
+            <div class="card">
+                <h2 id="goals-title">Study Goals</h2>
+                <div class="goals-list" id="goals-list">
+                    <!-- Goals will be populated by JavaScript -->
+                </div>
+                <button id="add-goal-btn" class="primary-button">
+                    <i class="fas fa-plus"></i> <span id="add-goal-text">Add Goal</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Floating Action Buttons -->
+    <div class="floating-buttons">
+        <div class="floating-button" id="timer-toggle">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="floating-button" id="rotation-toggle">
+            <i class="fas fa-calendar-week"></i>
+        </div>
+        <div class="floating-button" id="analytics-toggle">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="floating-button" id="goals-toggle">
+            <i class="fas fa-bullseye"></i>
+        </div>
+    </div>
+
+    <!-- Pomodoro Timer -->
+    <div id="pomodoro-container" class="pomodoro-container hidden">
+        <div class="pomodoro-card">
+            <div class="pomodoro-header">
+                <h3 id="pomodoro-title">Pomodoro Timer</h3>
+                <button id="close-pomodoro" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="timer-display">
+                <div class="timer" id="timer">25:00</div>
+                <div class="timer-label" id="timer-label">Focus Time</div>
+            </div>
+            <div class="timer-controls">
+                <button id="start-timer" class="timer-button">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="pause-timer" class="timer-button hidden">
+                    <i class="fas fa-pause"></i>
+                </button>
+                <button id="reset-timer" class="timer-button">
+                    <i class="fas fa-redo"></i>
+                </button>
+            </div>
+            <div class="timer-settings">
+                <div class="timer-setting">
+                    <label id="focus-time-label" for="focus-time">Focus Time (min)</label>
+                    <input type="number" id="focus-time" min="1" max="60" value="25">
+                </div>
+                <div class="timer-setting">
+                    <label id="break-time-label" for="break-time">Break Time (min)</label>
+                    <input type="number" id="break-time" min="1" max="30" value="5">
+                </div>
+                <div class="timer-setting">
+                    <label id="long-break-time-label" for="long-break-time">Long Break (min)</label>
+                    <input type="number" id="long-break-time" min="5" max="60" value="15">
+                </div>
+                <div class="timer-setting">
+                    <label id="sessions-label" for="sessions">Sessions before long break</label>
+                    <input type="number" id="sessions" min="1" max="10" value="4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Flashcard Modal -->
+    <div id="flashcard-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="flashcard-modal-title">Add Flashcard</h3>
+                <button id="close-flashcard-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="flashcard-question-label" for="flashcard-question">Question</label>
+                    <textarea id="flashcard-question" placeholder="Enter your question"></textarea>
+                </div>
+                <div class="form-group">
+                    <label id="flashcard-answer-label" for="flashcard-answer">Answer</label>
+                    <textarea id="flashcard-answer" placeholder="Enter the answer"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-flashcard" class="primary-button">Save</button>
+                <button id="cancel-flashcard" class="secondary-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Flashcards Modal -->
+    <div id="study-flashcards-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="study-flashcards-modal-title">Study Flashcards</h3>
+                <button id="close-study-flashcards-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="flashcard-study-container">
+                    <div class="flashcard-study" id="flashcard-study">
+                        <div class="flashcard-front" id="flashcard-front">
+                            <p id="flashcard-front-text">Question will appear here</p>
+                        </div>
+                        <div class="flashcard-back hidden" id="flashcard-back">
+                            <p id="flashcard-back-text">Answer will appear here</p>
+                        </div>
+                    </div>
+                    <button id="flip-flashcard" class="secondary-button">
+                        <i class="fas fa-sync"></i> <span id="flip-text">Flip Card</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="flashcard-navigation">
+                    <button id="prev-flashcard" class="nav-button">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="flashcard-counter">1/1</span>
+                    <button id="next-flashcard" class="nav-button">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="flashcard-rating">
+                    <button id="hard-rating" class="rating-button hard">
+                        <i class="fas fa-thumbs-down"></i> <span id="hard-text">Hard</span>
+                    </button>
+                    <button id="good-rating" class="rating-button good">
+                        <i class="fas fa-thumbs-up"></i> <span id="good-text">Good</span>
+                    </button>
+                    <button id="easy-rating" class="rating-button easy">
+                        <i class="fas fa-check-circle"></i> <span id="easy-text">Easy</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div id="goal-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="goal-modal-title">Add Goal</h3>
+                <button id="close-goal-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label id="goal-title-label" for="goal-title">Goal Title</label>
+                    <input type="text" id="goal-title" placeholder="Enter goal title">
+                </div>
+                <div class="form-group">
+                    <label id="goal-description-label" for="goal-description">Description</label>
+                    <textarea id="goal-description" placeholder="Enter goal description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label id="goal-deadline-label" for="goal-deadline">Deadline</label>
+                    <input type="date" id="goal-deadline">
+                </div>
+                <div class="form-group">
+                    <label id="goal-priority-label" for="goal-priority">Priority</label>
+                    <select id="goal-priority">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-goal" class="primary-button">Save</button>
+                <button id="cancel-goal" class="secondary-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="export-modal-title">Export Data</h3>
+                <button id="close-export-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <div class="export-option">
+                        <input type="radio" id="export-json" name="export-type" value="json" checked>
+                        <label for="export-json">JSON (Full Backup)</label>
+                    </div>
+                    <div class="export-option">
+                        <input type="radio" id="export-pdf" name="export-type" value="pdf">
+                        <label for="export-pdf">PDF Report</label>
+                    </div>
+                    <div class="export-option">
+                        <input type="radio" id="export-excel" name="export-type" value="excel">
+                        <label for="export-excel">Excel Spreadsheet</label>
+                    </div>
+                </div>
+                <div class="export-content">
+                    <h4 id="export-content-title">Select Content to Export</h4>
+                    <div class="export-content-options">
+                        <div class="export-content-option">
+                            <input type="checkbox" id="export-progress" name="export-content" value="progress" checked>
+                            <label for="export-progress">Progress Data</label>
+                        </div>
+                        <div class="export-content-option">
+                            <input type="checkbox" id="export-notes" name="export-content" value="notes" checked>
+                            <label for="export-notes">Notes</label>
+                        </div>
+                        <div class="export-content-option">
+                            <input type="checkbox" id="export-flashcards" name="export-content" value="flashcards" checked>
+                            <label for="export-flashcards">Flashcards</label>
+                        </div>
+                        <div class="export-content-option">
+                            <input type="checkbox" id="export-goals" name="export-content" value="goals" checked>
+                            <label for="export-goals">Goals</label>
+                        </div>
+                        <div class="export-content-option">
+                            <input type="checkbox" id="export-analytics" name="export-content" value="analytics" checked>
+                            <label for="export-analytics">Analytics</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="do-export" class="primary-button">Export</button>
+                <button id="cancel-export" class="secondary-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="settings-modal-title">Settings</h3>
+                <button id="close-settings-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4 id="appearance-title">Appearance</h4>
+                    <div class="setting-item">
+                        <label id="theme-label" for="theme-select">Theme</label>
+                        <select id="theme-select">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System Default</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label id="accent-color-label" for="accent-color">Accent Color</label>
+                        <input type="color" id="accent-color" value="#ff9a3c">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 id="notifications-title">Notifications</h4>
+                    <div class="setting-item">
+                        <label id="enable-notifications-label" for="enable-notifications">Enable Notifications</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enable-notifications">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label id="reminder-time-label" for="reminder-time">Daily Reminder Time</label>
+                        <input type="time" id="reminder-time" value="18:00">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4 id="data-title">Data Management</h4>
+                    <div class="setting-item">
+                        <label id="auto-backup-label" for="auto-backup">Auto Backup</label>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-backup">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-buttons">
+                        <button id="backup-now" class="secondary-button">
+                            <i class="fas fa-download"></i> <span id="backup-now-text">Backup Now</span>
+                        </button>
+                        <button id="restore-data" class="secondary-button">
+                            <i class="fas fa-upload"></i> <span id="restore-data-text">Restore Data</span>
+                        </button>
+                        <button id="reset-data" class="danger-button">
+                            <i class="fas fa-trash"></i> <span id="reset-data-text">Reset All Data</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings" class="primary-button">Save Settings</button>
+                <button id="cancel-settings" class="secondary-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements Modal -->
+    <div id="achievements-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="achievements-modal-title">Achievements</h3>
+                <button id="close-achievements-modal" class="close-button">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="achievements-grid" id="achievements-grid">
+                    <!-- Achievements will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-achievements" class="secondary-button">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification hidden">
+        <div class="notification-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="notification-message"></span>
+        </div>
+        <button id="notification-close">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div id="achievement-popup" class="achievement-popup hidden">
+        <div class="achievement-popup-content">
+            <div class="achievement-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <div class="achievement-info">
+                <h4 id="achievement-title">Achievement Unlocked!</h4>
+                <p id="achievement-description">You've earned a new achievement.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
